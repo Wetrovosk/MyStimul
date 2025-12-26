@@ -50,6 +50,8 @@ export interface RitualState {
     dependencies?: string[]; // IDs of steps that must be completed before this one
   }[];
   dependencies?: string[]; // IDs of rituals that must be completed before this one
+  trainer?: string; // For workout rituals
+  duration?: number; // For workout rituals
 }
 
 export interface DerivedState {
@@ -62,4 +64,16 @@ export interface DerivedState {
   };
   anchors: { selfcare?: string; plants?: string; health?: string };
   overdueCount: number;
+  development: {
+    lecture: number;
+    practical: number;
+    zoo: number;
+    fiction_ru: number;
+    words: number;
+    soap: number;
+  };
+  work: {
+    emailChecks: number;
+    weekendMarked: boolean;
+  };
 }

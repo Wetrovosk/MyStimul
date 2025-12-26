@@ -73,17 +73,77 @@ class SonechkaUI {
   private renderAnchors(anchors: { selfcare?: string; plants?: string; health?: string }): void {
     if (!this.anchorsContainer) return;
 
-    // For now, just show placeholder anchors
-    const anchorItems = [
-      { name: 'Эстрожель (утро)', status: '⏳' },
-      { name: 'Монстера', status: '🔴' },
-      { name: 'Нежные зарядки', status: '✅' },
-      { name: 'Глюкоза', status: '🟡 4.1' },
-      { name: 'Почта', status: '✅' }
-    ];
+    const state = this.app.getCurrentState();
+    const anchorItems = [];
 
-    this.anchorsContainer.innerHTML = anchorItems.map(anchor => `
-      <div class="anchor-item">
+    // Health anchors
+    if (state.glucose.status === 'low' && state.glucose.last) {
+      anchorItems.push({ name: `Глюкоза (${state.glucose.last.value})`, status: '🔴', type: 'glucose' });
+    } else {
+      // Add pending health ritual steps
+      const morningRitual = state.rituals['ritual_morning_prep'];
+      if (morningRitual && !morningRitual.completed) {
+        const pendingStep = morningRitual.steps.find((step: any) => !step.completed);
+        if (pendingStep) {
+          anchorItems.push({ 
+            name: pendingStep.name, 
+            status: '⏳', 
+            type: 'health',
+            ritualId: 'ritual_morning_prep',
+            stepId: pendingStep.id
+          });
+        }
+      }
+    }
+
+    // Plant anchors
+    if (state.anchors.plants) {
+      const plant = state.plants[state.anchors.plants];
+      if (plant) {
+        let statusIcon = '✅';
+        if (plant.riskLevel === 'high') statusIcon = '🔴';
+        else if (plant.riskLevel === 'medium') statusIcon = '🟡';
+        else if (plant.riskLevel === 'low') statusIcon = '🟢';
+        
+        anchorItems.push({ 
+          name: plant.name, 
+          status: statusIcon, 
+          type: 'plant',
+          plantId: plant.id
+        });
+      }
+    }
+
+    // Self-care anchors
+    const makeupRitual = state.rituals['ritual_makeup'];
+    if (makeupRitual && !makeupRitual.completed) {
+      const pendingStep = makeupRitual.steps.find((step: any) => !step.completed);
+      if (pendingStep) {
+        anchorItems.push({ 
+          name: pendingStep.name, 
+          status: '⏳', 
+          type: 'selfcare',
+          ritualId: 'ritual_makeup',
+          stepId: pendingStep.id
+        });
+      }
+    }
+
+    // Work anchors
+    if (state.work.emailChecks < 2) { // Assuming 2 email checks per day on weekdays
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      // Only show email anchor on weekdays (Monday=1 to Friday=5)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        anchorItems.push({ name: 'Проверка почты', status: '⏳', type: 'work', ritualId: 'work_email' });
+      }
+    }
+
+    // Limit to 5 anchors as per spec
+    const limitedAnchors = anchorItems.slice(0, 5);
+
+    this.anchorsContainer.innerHTML = limitedAnchors.map(anchor => `
+      <div class="anchor-item" onclick="sonechkaUI.handleAnchorClick('${anchor.type}', '${anchor.ritualId || anchor.plantId || ''}', '${anchor.stepId || ''}')">
         <span class="anchor-name">${anchor.name}</span>
         <span class="anchor-status">${anchor.status}</span>
       </div>
@@ -122,11 +182,22 @@ class SonechkaUI {
   private updateDayEndButton(state: any): void {
     if (!this.dayEndButton) return;
 
-    // For now, just enable the button after a delay to simulate checking
-    // In a real implementation, this would check if all required anchors are completed
-    setTimeout(() => {
-      this.dayEndButton!.disabled = false;
-    }, 1000);
+    // Check if all required anchors are completed
+    // For now, check if morning ritual is completed and glucose is not low
+    const morningRitual = state.rituals['ritual_morning_prep'];
+    const eveningRitual = state.rituals['ritual_evening_prep'];
+    
+    // Check if all required health rituals are completed
+    const healthRitualsComplete = morningRitual?.completed && eveningRitual?.completed;
+    
+    // Check if glucose is not critically low
+    const glucoseOk = state.glucose.status !== 'low';
+    
+    // Check if required work tasks are done (email checks)
+    const workComplete = state.work.emailChecks >= 2; // Assuming 2 checks per day
+    
+    // Enable button only if all required tasks are completed
+    this.dayEndButton.disabled = !(healthRitualsComplete && glucoseOk && workComplete);
   }
 
   private updateSaveStatus(status: 'saving' | 'saved' | 'error'): void {
@@ -157,6 +228,39 @@ class SonechkaUI {
     };
     
     this.app.addEvent(event);
+  }
+  
+  public handleAnchorClick(type: string, id: string, stepId: string): void {
+    if (type === 'plant' && id) {
+      // Water the plant
+      const event: Event = {
+        type: "watering_done",
+        ts: new Date().toISOString(),
+        plantId: id
+      };
+      
+      this.app.addEvent(event);
+    } else if (type === 'glucose') {
+      // Prompt for glucose measurement
+      const glucoseValue = prompt('Введите уровень глюкозы:');
+      if (glucoseValue !== null) {
+        const value = parseFloat(glucoseValue);
+        if (!isNaN(value)) {
+          const event: Event = {
+            type: "glucose_measured",
+            ts: new Date().toISOString(),
+            value: value
+          };
+          
+          this.app.addEvent(event);
+        }
+      }
+    } else if (type === 'health' || type === 'selfcare' || type === 'work') {
+      // Complete the associated ritual step
+      if (id && stepId) {
+        this.markStepComplete(id, stepId);
+      }
+    }
   }
 }
 
