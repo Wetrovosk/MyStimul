@@ -1,7 +1,15 @@
 // AppStateManager.ts - Core state management with event sourcing
 
 import { AppState, Event, DerivedState, PlantState, RitualState, PlantProfile } from './types';
-import { v4 as uuidv4 } from 'uuid';
+
+// Simple UUID v4 generator without external dependencies
+function uuidv4(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 export class AppStateManager {
   private state: AppState;
@@ -623,6 +631,60 @@ export class AppStateManager {
 
     // Add development/work rituals
     const developmentRituals = {
+      lecture: {
+        id: "lecture",
+        name: "Лекция",
+        completed: false,
+        steps: [
+          { id: "lecture_done", name: "Посмотреть лекцию", completed: false }
+        ],
+        dependencies: []
+      },
+      practical: {
+        id: "practical",
+        name: "Практика",
+        completed: false,
+        steps: [
+          { id: "practical_done", name: "Выполнить практику", completed: false }
+        ],
+        dependencies: []
+      },
+      zoo: {
+        id: "zoo",
+        name: "Зоопсихология",
+        completed: false,
+        steps: [
+          { id: "zoo_done", name: "Занятие по зоопсихологии", completed: false }
+        ],
+        dependencies: []
+      },
+      fiction_ru: {
+        id: "fiction_ru",
+        name: "Худ. литература",
+        completed: false,
+        steps: [
+          { id: "fiction_ru_done", name: "Прочитать главу", completed: false }
+        ],
+        dependencies: []
+      },
+      words: {
+        id: "words",
+        name: "Англ. слова",
+        completed: false,
+        steps: [
+          { id: "words_learned", name: "Выучить 10 слов", completed: false }
+        ],
+        dependencies: []
+      },
+      soap: {
+        id: "soap",
+        name: "Мыловарение",
+        completed: false,
+        steps: [
+          { id: "soap_session", name: "Сделать сессию", completed: false }
+        ],
+        dependencies: []
+      },
       work_email: {
         id: "work_email",
         name: "Проверка почты",
