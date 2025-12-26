@@ -104,11 +104,11 @@ export class AppStateManager {
         name: "Обеденная подготовка",
         completed: false,
         steps: [
-          { id: "meal_breakfast", name: "Завтрак", completed: false },
-          { id: "med_ki_1", name: "Йод", completed: false },
-          { id: "med_mg_2", name: "Магний", completed: false },
-          { id: "med_stimol_2", name: "Стимол", completed: false },
-          { id: "med_omega3", name: "Омега-3", completed: false }
+          { id: "meal_breakfast", name: "Завтрак", completed: false, dependencies: [] },
+          { id: "med_ki_1", name: "Йод", completed: false, dependencies: ["meal_breakfast"] },
+          { id: "med_mg_2", name: "Магний", completed: false, dependencies: ["meal_breakfast"] },
+          { id: "med_stimol_2", name: "Стимол", completed: false, dependencies: ["meal_breakfast"] },
+          { id: "med_omega3", name: "Омега-3", completed: false, dependencies: ["meal_breakfast"] }
         ],
         dependencies: ["meal_breakfast"]
       },
@@ -117,13 +117,13 @@ export class AppStateManager {
         name: "Вечерняя подготовка",
         completed: false,
         steps: [
-          { id: "meal_dinner", name: "Ужин", completed: false },
-          { id: "eye_emoxipin_4", name: "Капли Эмоксипин", completed: false },
-          { id: "med_ki_2", name: "Йод", completed: false },
-          { id: "med_mg_3", name: "Магний", completed: false },
-          { id: "med_stimol_3", name: "Стимол", completed: false },
-          { id: "eye_midramax", name: "Капли Мидрамакс", completed: false },
-          { id: "estraderm_evening", name: "Эстрожель (вечер)", completed: false }
+          { id: "meal_dinner", name: "Ужин", completed: false, dependencies: [] },
+          { id: "eye_emoxipin_4", name: "Капли Эмоксипин", completed: false, dependencies: ["meal_dinner"] },
+          { id: "med_ki_2", name: "Йод", completed: false, dependencies: ["meal_dinner", "eye_emoxipin_4"] }, // >=15 min after eye drops
+          { id: "med_mg_3", name: "Магний", completed: false, dependencies: ["meal_dinner"] },
+          { id: "med_stimol_3", name: "Стимол", completed: false, dependencies: ["meal_dinner"] },
+          { id: "eye_midramax", name: "Капли Мидрамакс", completed: false, dependencies: ["meal_dinner"] },
+          { id: "estraderm_evening", name: "Эстрожель (вечер)", completed: false, dependencies: ["meal_dinner"] }
         ],
         dependencies: ["meal_dinner"]
       },
@@ -133,10 +133,10 @@ export class AppStateManager {
         name: "Утренний уход за кожей",
         completed: false,
         steps: [
-          { id: "skincare_step_1", name: "Очищение", completed: false },
-          { id: "skincare_step_2", name: "Тоник", completed: false },
-          { id: "skincare_step_3", name: "Сыворотка", completed: false },
-          { id: "skincare_step_4", name: "Крем", completed: false }
+          { id: "skincare_step_1", name: "Очищение", completed: false, dependencies: ["estraderm_morning", "eye_drops_systane"] },
+          { id: "skincare_step_2", name: "Тоник", completed: false, dependencies: ["skincare_step_1"] },
+          { id: "skincare_step_3", name: "Сыворотка", completed: false, dependencies: ["skincare_step_2"] },
+          { id: "skincare_step_4", name: "Крем", completed: false, dependencies: ["skincare_step_3"] }
         ],
         dependencies: ["estraderm_morning", "eye_drops_systane"]
       },
@@ -145,11 +145,11 @@ export class AppStateManager {
         name: "Макияж",
         completed: false,
         steps: [
-          { id: "makeup_primer", name: "База под макияж", completed: false },
-          { id: "makeup_foundation", name: "Тональный крем", completed: false },
-          { id: "makeup_blush", name: "Румяна", completed: false },
-          { id: "makeup_eyes", name: "Макияж глаз", completed: false },
-          { id: "makeup_lips", name: "Помада", completed: false }
+          { id: "makeup_primer", name: "База под макияж", completed: false, dependencies: ["ritual_skin_care_morning"] },
+          { id: "makeup_foundation", name: "Тональный крем", completed: false, dependencies: ["makeup_primer"] },
+          { id: "makeup_blush", name: "Румяна", completed: false, dependencies: ["makeup_foundation"] },
+          { id: "makeup_eyes", name: "Макияж глаз", completed: false, dependencies: ["makeup_foundation"] },
+          { id: "makeup_lips", name: "Помада", completed: false, dependencies: ["makeup_eyes"] }
         ],
         dependencies: ["ritual_skin_care_morning"]
       },
@@ -168,14 +168,483 @@ export class AppStateManager {
         name: "Вечерний уход",
         completed: false,
         steps: [
-          { id: "evening_skincare_step_1", name: "Очищение", completed: false },
-          { id: "evening_skincare_step_2", name: "Тоник", completed: false },
-          { id: "evening_skincare_step_3", name: "Сыворотка", completed: false },
-          { id: "evening_skincare_step_4", name: "Ночной крем", completed: false }
+          { id: "evening_skincare_step_1", name: "Очищение", completed: false, dependencies: ["eye_midramax"] },
+          { id: "evening_skincare_step_2", name: "Тоник", completed: false, dependencies: ["evening_skincare_step_1"] },
+          { id: "evening_skincare_step_3", name: "Сыворотка", completed: false, dependencies: ["evening_skincare_step_2"] },
+          { id: "evening_skincare_step_4", name: "Ночной крем", completed: false, dependencies: ["evening_skincare_step_3"] }
         ],
         dependencies: ["eye_midramax"]
       }
     };
+
+    // Add workout rituals based on the specification
+    const workoutRituals = {
+      w1d3m: {
+        id: "w1d3m",
+        name: "Танцы антистресс",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 20,
+        steps: [
+          { id: "w1d3m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w1d4m: {
+        id: "w1d4m",
+        name: "Зарядки без коврика",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 8,
+        steps: [
+          { id: "w1d4m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w1d4d: {
+        id: "w1d4d",
+        name: "Секси денс",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 20,
+        steps: [
+          { id: "w1d4d_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w1d5e: {
+        id: "w1d5e",
+        name: "ВЕЧЕР Зарядки для лица",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 10,
+        steps: [
+          { id: "w1d5e_eye_drops", name: "Капли Систейн", completed: false },
+          { id: "w1d5e_start", name: "Начать тренировку", completed: false, dependencies: ["w1d5e_eye_drops"] }
+        ]
+      },
+      w1d6e: {
+        id: "w1d6e",
+        name: "ДЕНЬ Работа с гиперлордозом",
+        completed: false,
+        trainer: "Кристина Вершинина",
+        duration: 30,
+        steps: [
+          { id: "w1d6e_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w1d6e_start", name: "Начать тренировку", completed: false, dependencies: ["w1d6e_glucose_check"] }
+        ]
+      },
+      w1d6g: {
+        id: "w1d6g",
+        name: "ВЕЧЕР Фейсфитнес",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 25,
+        steps: [
+          { id: "w1d6g_eye_drops", name: "Капли Систейн", completed: false },
+          { id: "w1d6g_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w1d6g_start", name: "Начать тренировку", completed: false, dependencies: ["w1d6g_eye_drops", "w1d6g_glucose_check"] }
+        ]
+      },
+      w2d1e: {
+        id: "w2d1e",
+        name: "ДЕНЬ Functional Core",
+        completed: false,
+        trainer: "Елизавета Прокудина",
+        duration: 30,
+        steps: [
+          { id: "w2d1e_check_weights", name: "Проверить гантели 0.75 кг", completed: false },
+          { id: "w2d1e_start", name: "Начать тренировку", completed: false, dependencies: ["w2d1e_check_weights"] }
+        ]
+      },
+      w2d2e: {
+        id: "w2d2e",
+        name: "ДЕНЬ Йога для здоровой спины",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 20,
+        steps: [
+          { id: "w2d2e_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w2d2e_start", name: "Начать тренировку", completed: false, dependencies: ["w2d2e_glucose_check"] }
+        ]
+      },
+      w2d3m: {
+        id: "w2d3m",
+        name: "ДЕНЬ Упражнения на осанку",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 15,
+        steps: [
+          { id: "w2d3m_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w2d3m_start", name: "Начать тренировку", completed: false, dependencies: ["w2d3m_glucose_check"] }
+        ]
+      },
+      w2d4m: {
+        id: "w2d4m",
+        name: "ВЕЧЕР Танцы для похудения",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 25,
+        steps: [
+          { id: "w2d4m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w2d5e: {
+        id: "w2d5e",
+        name: "ДЕНЬ Пресс + ягодицы",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 20,
+        steps: [
+          { id: "w2d5e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w2d6e: {
+        id: "w2d6e",
+        name: "ВЕЧЕР Тренировка на баланс",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 18,
+        steps: [
+          { id: "w2d6e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w2d6g: {
+        id: "w2d6g",
+        name: "ДЕНЬ Мягкая йога",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 25,
+        steps: [
+          { id: "w2d6g_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w3d1e: {
+        id: "w3d1e",
+        name: "ВЕЧЕР Упражнения для спины",
+        completed: false,
+        trainer: "Кристина Вершинина",
+        duration: 20,
+        steps: [
+          { id: "w3d1e_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w3d1e_start", name: "Начать тренировку", completed: false, dependencies: ["w3d1e_glucose_check"] }
+        ]
+      },
+      w3d2e: {
+        id: "w3d2e",
+        name: "ДЕНЬ Танцы с элементами силовой",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 30,
+        steps: [
+          { id: "w3d2e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w3d3m: {
+        id: "w3d3m",
+        name: "ВЕЧЕР Упражнения для шеи",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 12,
+        steps: [
+          { id: "w3d3m_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w3d3m_start", name: "Начать тренировку", completed: false, dependencies: ["w3d3m_glucose_check"] }
+        ]
+      },
+      w3d4m: {
+        id: "w3d4m",
+        name: "ДЕНЬ Кардио тренировка",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 22,
+        steps: [
+          { id: "w3d4m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w3d5e: {
+        id: "w3d5e",
+        name: "ВЕЧЕР Растяжка",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 15,
+        steps: [
+          { id: "w3d5e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w3d6e: {
+        id: "w3d6e",
+        name: "ДЕНЬ Фейсфитнес",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 18,
+        steps: [
+          { id: "w3d6e_eye_drops", name: "Капли Систейн", completed: false },
+          { id: "w3d6e_start", name: "Начать тренировку", completed: false, dependencies: ["w3d6e_eye_drops"] }
+        ]
+      },
+      w3d6g: {
+        id: "w3d6g",
+        name: "ВЕЧЕР Танцы антистресс",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 20,
+        steps: [
+          { id: "w3d6g_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w4d1e: {
+        id: "w4d1e",
+        name: "ДЕНЬ Силовая тренировка",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 35,
+        steps: [
+          { id: "w4d1e_check_weights", name: "Проверить гантели 0.75 кг", completed: false },
+          { id: "w4d1e_start", name: "Начать тренировку", completed: false, dependencies: ["w4d1e_check_weights"] }
+        ]
+      },
+      w4d2e: {
+        id: "w4d2e",
+        name: "ВЕЧЕР Упражнения для похудения",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 25,
+        steps: [
+          { id: "w4d2e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w4d3m: {
+        id: "w4d3m",
+        name: "ДЕНЬ Йога для гибкости",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 30,
+        steps: [
+          { id: "w4d3m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w4d4m: {
+        id: "w4d4m",
+        name: "ВЕЧЕР Упражнения на осанку",
+        completed: false,
+        trainer: "Кристина Вершинина",
+        duration: 15,
+        steps: [
+          { id: "w4d4m_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w4d4m_start", name: "Начать тренировку", completed: false, dependencies: ["w4d4m_glucose_check"] }
+        ]
+      },
+      w4d5e: {
+        id: "w4d5e",
+        name: "ДЕНЬ Танцы для тонуса",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 20,
+        steps: [
+          { id: "w4d5e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w4d6e: {
+        id: "w4d6e",
+        name: "ВЕЧЕР Пресс и ягодицы",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 18,
+        steps: [
+          { id: "w4d6e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w4d6g: {
+        id: "w4d6g",
+        name: "ДЕНЬ Медитация и дыхание",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 15,
+        steps: [
+          { id: "w4d6g_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w5d1e: {
+        id: "w5d1e",
+        name: "ВЕЧЕР Йога для расслабления",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 25,
+        steps: [
+          { id: "w5d1e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w5d2e: {
+        id: "w5d2e",
+        name: "ДЕНЬ Кардио и силовые",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 30,
+        steps: [
+          { id: "w5d2e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w5d3m: {
+        id: "w5d3m",
+        name: "ВЕЧЕР Упражнения для спины",
+        completed: false,
+        trainer: "Кристина Вершинина",
+        duration: 20,
+        steps: [
+          { id: "w5d3m_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w5d3m_start", name: "Начать тренировку", completed: false, dependencies: ["w5d3m_glucose_check"] }
+        ]
+      },
+      w5d4m: {
+        id: "w5d4m",
+        name: "ДЕНЬ Танцы для тела",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 25,
+        steps: [
+          { id: "w5d4m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w5d5e: {
+        id: "w5d5e",
+        name: "ВЕЧЕР Растяжка и расслабление",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 20,
+        steps: [
+          { id: "w5d5e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w5d6e: {
+        id: "w5d6e",
+        name: "ДЕНЬ Фейсфитнес",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 18,
+        steps: [
+          { id: "w5d6e_eye_drops", name: "Капли Систейн", completed: false },
+          { id: "w5d6e_start", name: "Начать тренировку", completed: false, dependencies: ["w5d6e_eye_drops"] }
+        ]
+      },
+      w5d6g: {
+        id: "w5d6g",
+        name: "ВЕЧЕР Тренировка на баланс",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 18,
+        steps: [
+          { id: "w5d6g_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w6d1e: {
+        id: "w6d1e",
+        name: "ДЕНЬ Силовая тренировка",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 35,
+        steps: [
+          { id: "w6d1e_check_weights", name: "Проверить гантели 0.75 кг", completed: false },
+          { id: "w6d1e_start", name: "Начать тренировку", completed: false, dependencies: ["w6d1e_check_weights"] }
+        ]
+      },
+      w6d2e: {
+        id: "w6d2e",
+        name: "ВЕЧЕР Упражнения для похудения",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 25,
+        steps: [
+          { id: "w6d2e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w6d3m: {
+        id: "w6d3m",
+        name: "ДЕНЬ Йога для гибкости",
+        completed: false,
+        trainer: "Лера Буры",
+        duration: 30,
+        steps: [
+          { id: "w6d3m_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w6d4m: {
+        id: "w6d4m",
+        name: "ВЕЧЕР Упражнения на осанку",
+        completed: false,
+        trainer: "Кристина Вершинина",
+        duration: 15,
+        steps: [
+          { id: "w6d4m_glucose_check", name: "Проверить глюкозу ≥ 4.5", completed: false },
+          { id: "w6d4m_start", name: "Начать тренировку", completed: false, dependencies: ["w6d4m_glucose_check"] }
+        ]
+      },
+      w6d5e: {
+        id: "w6d5e",
+        name: "ДЕНЬ Танцы для тонуса",
+        completed: false,
+        trainer: "Илана Сухорукова",
+        duration: 20,
+        steps: [
+          { id: "w6d5e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w6d6e: {
+        id: "w6d6e",
+        name: "ВЕЧЕР Пресс и ягодицы",
+        completed: false,
+        trainer: "Маша Мерикка",
+        duration: 18,
+        steps: [
+          { id: "w6d6e_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w6d6g: {
+        id: "w6d6g",
+        name: "ДЕНЬ Медитация и дыхание",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 15,
+        steps: [
+          { id: "w6d6g_start", name: "Начать тренировку", completed: false }
+        ]
+      },
+      w7d4h: {
+        id: "w7d4h",
+        name: "ВЕЧЕР Зарядки для лица",
+        completed: false,
+        trainer: "Иванна Идуш",
+        duration: 10,
+        steps: [
+          { id: "w7d4h_eye_drops", name: "Капли Систейн", completed: false },
+          { id: "w7d4h_start", name: "Начать тренировку", completed: false, dependencies: ["w7d4h_eye_drops"] }
+        ]
+      }
+    };
+
+    // Add workout rituals to the main rituals object
+    Object.assign(rituals, workoutRituals);
+
+    // Add development/work rituals
+    const developmentRituals = {
+      work_email: {
+        id: "work_email",
+        name: "Проверка почты",
+        completed: false,
+        steps: [
+          { id: "work_email_check_1", name: "Первая проверка", completed: false },
+          { id: "work_email_check_2", name: "Вторая проверка", completed: false }
+        ],
+        dependencies: [] // Will be handled by business logic
+      },
+      work_weekend: {
+        id: "work_weekend",
+        name: "Отметка выходного",
+        completed: false,
+        steps: [
+          { id: "work_weekend_mark", name: "Отметить выходной", completed: false }
+        ],
+        dependencies: []
+      }
+    };
+
+    Object.assign(rituals, developmentRituals);
 
     // Initialize default plants
     const plants: Record<string, PlantState> = {
@@ -320,25 +789,96 @@ export class AppStateManager {
       status: "unknown" as "low" | "optimal" | "high" | "unknown"
     };
 
+    // Add development tracking
+    const developmentCounters = {
+      lecture: 0,
+      practical: 0,
+      zoo: 0,
+      fiction_ru: 0,
+      words: 0,
+      soap: 0
+    };
+    
+    // Add work tracking
+    const workTracking = {
+      emailChecks: 0,
+      weekendMarked: false
+    };
+    
     // Process all events to update the state
     for (const event of this.state.events) {
+      if (event.type === "ritual_step_completed") {
+        // Count development activities
+        switch(event.stepId) {
+          case "lecture_done":
+            developmentCounters.lecture += 1;
+            break;
+          case "practical_done":
+            developmentCounters.practical += 1;
+            break;
+          case "zoo_done":
+            developmentCounters.zoo += 1;
+            break;
+          case "fiction_ru_done":
+            // Fiction_ru is counted by pages/lines, would need additional event data
+            developmentCounters.fiction_ru += 1;
+            break;
+          case "words_learned":
+            developmentCounters.words += 1;
+            break;
+          case "soap_session":
+            developmentCounters.soap += 1;
+            break;
+          case "work_email_check_1":
+          case "work_email_check_2":
+            workTracking.emailChecks += 1;
+            break;
+          case "work_weekend_mark":
+            workTracking.weekendMarked = true;
+            break;
+        }
+      }
+      
       switch (event.type) {
         case "ritual_step_completed":
           // Update the specific step as completed
           if (rituals[event.ritualId]) {
             const step = rituals[event.ritualId].steps.find(s => s.id === event.stepId);
             if (step) {
-              step.completed = true;
+              // Check if all dependencies for this step are completed
+              const dependenciesMet = step.dependencies ? 
+                step.dependencies.every(depId => {
+                  // Check if the dependency is a step in the same ritual
+                  const depStep = rituals[event.ritualId].steps.find(s => s.id === depId);
+                  if (depStep) return depStep.completed;
+                  
+                  // Check if the dependency is a ritual
+                  if (rituals[depId]) return rituals[depId].completed;
+                  
+                  // If dependency not found, consider it as completed
+                  return true;
+                }) : true;
               
-              // Check if all steps in the ritual are completed
-              const allStepsCompleted = rituals[event.ritualId].steps.every(s => s.completed);
-              rituals[event.ritualId].completed = allStepsCompleted;
+              if (dependenciesMet) {
+                step.completed = true;
+                
+                // Check if all steps in the ritual are completed
+                const allStepsCompleted = rituals[event.ritualId].steps.every(s => {
+                  return s.completed;
+                });
+                rituals[event.ritualId].completed = allStepsCompleted;
+              }
             }
           }
           break;
 
         case "med_taken":
           // Handle medication events
+          break;
+
+        case "med_taken":
+          // Handle medication events
+          // For now, just acknowledge the event. More complex logic could be added for timing constraints.
           break;
 
         case "eye_drop_applied":
@@ -349,6 +889,19 @@ export class AppStateManager {
             if (morningRitual) {
               const systaneStep = morningRitual.steps.find(s => s.id === "eye_drops_systane");
               if (systaneStep) systaneStep.completed = true;
+            }
+            
+            // Mark systane drops as completed in w1d5e and w1d6g rituals
+            const faceRitual1 = rituals["w1d5e"];
+            if (faceRitual1) {
+              const systaneStep1 = faceRitual1.steps.find(s => s.id === "w1d5e_eye_drops");
+              if (systaneStep1) systaneStep1.completed = true;
+            }
+            
+            const faceRitual2 = rituals["w1d6g"];
+            if (faceRitual2) {
+              const systaneStep2 = faceRitual2.steps.find(s => s.id === "w1d6g_eye_drops");
+              if (systaneStep2) systaneStep2.completed = true;
             }
           } else if (event.dropType === "emoxipin") {
             // Mark emoxipin drops as completed in evening ritual
@@ -363,6 +916,12 @@ export class AppStateManager {
             if (eveningRitual) {
               const midramaxStep = eveningRitual.steps.find(s => s.id === "eye_midramax");
               if (midramaxStep) midramaxStep.completed = true;
+            }
+            
+            // Mark midramax drops as completed for evening care ritual dependency
+            const eveningCareRitual = rituals["ritual_evening_care"];
+            if (eveningCareRitual) {
+              // The dependency is already handled by the step dependency system
             }
           }
           break;
@@ -404,6 +963,9 @@ export class AppStateManager {
           } else {
             glucose.status = "high";
           }
+          
+          // When glucose is low, certain medications should be blocked
+          // This would be handled in the UI layer by checking glucose.status
           break;
 
         case "plant_profile_updated":
@@ -454,6 +1016,26 @@ export class AppStateManager {
         break;
       }
     }
+    
+    // Add more sophisticated anchor logic based on the specification
+    // Check for pending morning ritual steps
+    const morningRitual = rituals["ritual_morning_prep"];
+    if (morningRitual && !morningRitual.completed) {
+      const pendingStep = morningRitual.steps.find(step => !step.completed);
+      if (pendingStep) {
+        anchors.health = pendingStep.id; // This could be estraderm_morning, eye_drops_systane, etc.
+      }
+    }
+    
+    // Check for pending plant watering
+    if (!anchors.plants) {
+      for (const plantId in plants) {
+        if (plants[plantId].riskLevel === "medium") {
+          anchors.plants = plantId;
+          break;
+        }
+      }
+    }
 
     return {
       today,
@@ -461,7 +1043,9 @@ export class AppStateManager {
       plants,
       glucose,
       anchors,
-      overdueCount
+      overdueCount,
+      development: developmentCounters,
+      work: workTracking
     };
   }
 }
